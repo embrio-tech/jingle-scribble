@@ -1,0 +1,7 @@
+**/.env
+**/.envrc
+**/*.gcode
+**/*.svg
+**/.DS_Store
+.vscode
+

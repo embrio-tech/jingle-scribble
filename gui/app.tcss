@@ -1,0 +1,50 @@
+Screen {
+  align: center middle;
+}
+
+Body {
+    content-align: center middle;
+    width: 60;
+    height: auto;
+    padding: 1 1;
+    background: $panel;
+    color: $text;
+    border: $success-darken-3 double;
+    margin: 0
+}
+
+Footer {
+  background: $success;
+}
+
+Input {
+  width: 100%;
+  margin: 1;
+}
+
+Button {
+  width: 100%;
+  margin: 1;
+}
+
+RadioSet {
+  width: 100%;
+  margin: 1;
+}
+
+LoadingIndicator {
+    color: $success;
+}
+
+.center {
+    width: 100%;
+    text-align: center;
+}
+
+.right {
+  text-align: right;
+}
+
+.mb {
+  margin-bottom: 2;
+}

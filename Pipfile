@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+matplotlib = ">=2.1.0"
+pandas = ">=0.22.0"
+scikit-learn = ">=0.19.1"
+scipy = ">=1.0.0"
+svgwrite = ">=1.1.12"
+tensorflow = "==1.13.*"
+protobuf = "==3.20.*"
+openai = "==0.28.*"
+svg-to-gcode = "==1.5.*"
+textual = "==0.41.*"
+
+[dev-packages]
+textual-dev = "==1.2.*"
+
+[requires]
+python_version = "3.7"
