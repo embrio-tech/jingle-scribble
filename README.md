@@ -1,6 +1,5 @@
 # Jingle Scribble
-
-Jingle Scribble is a delightful Python application that generates handwritten Christmas cards for your customers. It utilizes an existing handwriting synthesis model from [sjvasquez/handwriting-synthesis](https://github.com/sjvasquez/handwriting-synthesis) and a user-friendly textual interface from [Textualize/textual](https://github.com/Textualize/textual).
+Jingle Scribble is a delightful Python application that generates handwritten Christmas cards for your customers. It utilizes an existing handwriting synthesis model from [sjvasquez/handwriting-synthesis](https://github.com/sjvasquez/handwriting-synthesis) and a user-friendly textual interface from [Textualize/textual](https://github.com/Textualize/textual). The program generates GCODE for the cards, so they can be printed with a pen plotter.
 
 ## Requirements
 - Python 3.7
