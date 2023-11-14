@@ -2,6 +2,11 @@ Screen {
   align: center middle;
 }
 
+Screen.top {
+  align: center top;
+}
+
+
 Body {
     content-align: center middle;
     width: 60;

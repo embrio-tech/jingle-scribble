@@ -14,9 +14,16 @@ protobuf = "==3.20.*"
 openai = "==0.28.*"
 svg-to-gcode = "==1.5.*"
 textual = "==0.41.*"
+oauthlib = "==3.2.*"
+google-auth = "==2.23.*"
+httpx = "*"
+pkce = "*"
+google-api-python-client = "*"
+unidecode = "*"
 
 [dev-packages]
 textual-dev = "==1.2.*"
+black = "*"
 
 [requires]
 python_version = "3.7"

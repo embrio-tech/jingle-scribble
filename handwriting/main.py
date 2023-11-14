@@ -1,4 +1,6 @@
 import os
+from globals import config
+from pathlib import Path
 import logging
 
 import numpy as np
@@ -6,11 +8,13 @@ import svgwrite
 
 
 from . import drawing
-from . import lyrics
 from .rnn import rnn
 
-PAPER_WIDTH = 120# mm
-PAPER_HEIGHT = 170# mm
+TMP_DIR = config['TMP']['DIR']
+TMP_FILENAME = config['TMP']['FILENAME']
+MARGIN = int(config['PAPER']['MARGIN'])
+PAPER_WIDTH = int(config['PAPER']['WIDTH'])
+PAPER_HEIGHT = int(config['PAPER']['HEIGHT'])
 
 
 class Hand(object):
@@ -42,7 +46,7 @@ class Hand(object):
         )
         self.nn.restore()
 
-    def write(self, filename, lines, biases=None, styles=None, stroke_colors=None, stroke_widths=None, line_spacings=None):
+    def write(self, write_file: bool, lines, biases=None, styles=None, stroke_colors=None, stroke_widths=None, line_spacings=None):
         valid_char_set = set(drawing.alphabet)
         for line_num, line in enumerate(lines):
             if len(line) > 75:
@@ -63,7 +67,7 @@ class Hand(object):
                     )
 
         strokes = self._sample(lines, biases=biases, styles=styles)
-        return self._draw(strokes, lines, filename, stroke_colors=stroke_colors, stroke_widths=stroke_widths, line_spacings=line_spacings)
+        return self._draw(strokes, lines, write_file, stroke_colors=stroke_colors, stroke_widths=stroke_widths, line_spacings=line_spacings)
 
     def _sample(self, lines, biases=None, styles=None):
         num_samples = len(lines)
@@ -114,13 +118,10 @@ class Hand(object):
                    for sample in samples]
         return samples
 
-    def _draw(self, strokes, lines, filename, stroke_colors=None, stroke_widths=None, line_spacings=None):
+    def _draw(self, strokes, lines, write_file: bool, stroke_colors=None, stroke_widths=None, line_spacings=None):
         stroke_colors = stroke_colors or ['black']*len(lines)
         stroke_widths = stroke_widths or [2]*len(lines)
         line_spacings = line_spacings or [1]*len(lines)
-
-        # if view_height > PAPER_HEIGHT:
-        #   raise ValueError('Message too long, overflowing paper length')
 
         x_min, x_max = [0,0]
         h_max = 0
@@ -135,18 +136,20 @@ class Hand(object):
             x_min = min(x_min, np.min(strokes[i][:,0]))
             h_max = max(h_max, 8*strokes[i][:,1].std())
             
-        view_width = x_max - x_min + 20
-        scale_factor = PAPER_WIDTH / view_width
+        text_width = x_max - x_min
+        scale_factor = (PAPER_WIDTH - MARGIN) / text_width
         line_height = h_max * scale_factor
-        view_height = line_height * (len(strokes) + 1) * np.mean(line_spacings)
+        view_height = line_height * (len(strokes)) * np.mean(line_spacings)+ MARGIN
 
+        if view_height > PAPER_HEIGHT:
+           raise ValueError('Message too long, overflowing paper length')
 
-        dwg = svgwrite.Drawing(filename=filename)
+        dwg = svgwrite.Drawing(filename=Path(TMP_DIR, f'{TMP_FILENAME}.svg').absolute().as_posix())
         dwg.viewbox(width=PAPER_WIDTH, height=view_height)
         dwg.add(dwg.rect(insert=(0, 0), size=(PAPER_WIDTH, view_height), fill='white'))
 
         last_final_coord = np.array([0, 0, 1.0])
-        initial_coord = np.array([0, -(3*line_height / 4 * line_spacings[0])])
+        initial_coord = np.array([0, -MARGIN/2])
         for line_strokes, line, color, width, spacing in zip(strokes, lines, stroke_colors, stroke_widths, line_spacings):
             # if line is empty, add empty space and go to next
             if not line:
@@ -155,6 +158,7 @@ class Hand(object):
 
             line_strokes[:,:2] *= scale_factor
             line_strokes[:, :2] -= line_strokes[:, :2].min() + initial_coord
+            line_strokes[:, 0] += MARGIN / 2 - 2
             #line_strokes[:, 0] += (view_width - line_strokes[:, 0].max()) / 2
 
             prev_eos = 1.0
@@ -168,7 +172,7 @@ class Hand(object):
             dwg.add(path)
             initial_coord[1] -= line_height * spacing
             last_final_coord = line_strokes[-1, :]
-        dwg.save()
+        if write_file: dwg.save()
         return dwg.tostring()
 
 

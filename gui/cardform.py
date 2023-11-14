@@ -12,21 +12,29 @@ class Body(Container):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.form = {}
+        self.form = { **self.app.state['message'] }
+        if 'text' in self.form:
+            del self.form['text']
 
     def compose(self):
         yield Label("Recipient")
-        yield Input(placeholder="Who will get the card?", name='recipient')
+        yield Input(placeholder="Who will get the card?", name='recipient', value=self.form.get('recipient', ''))
         yield Label("Context")
-        yield Input(placeholder="Tell me something about him...", name='context')
+        yield Input(placeholder="Tell me something about him...", name='context', value=self.form.get('context', ''))
         yield Label("Language")
         yield RadioSet(
-            RadioButton(label="English", name='english'),
+            RadioButton(label="English", name='english', value=True),
             RadioButton(label="German", name='german'),
             RadioButton(label="Italian", name='italian'),
             RadioButton(label="French", name='french'),
-            name="language"
-        )
+            name="language",
+            )
+        yield Label("Style")
+        yield RadioSet(
+            RadioButton(label="Informal", name='informal', value=True),
+            RadioButton(label="Formal", name='formal'),
+            name="style",
+            )
         yield Button(label="Generate", variant='success', name='generate_card')
 
     def on_input_changed(self, event: Input.Changed):
@@ -36,22 +44,12 @@ class Body(Container):
         self.form[event.control.name] = event.pressed.name
 
     async def on_button_pressed(self, event: Button.Pressed):
-        await self.run_action("app.push_screen('loader')")
-        card_worker = self.generate_card()
-        text = await card_worker.wait()
-        self.app.message['text'] = text
-        await self.run_action("app.pop_screen")
+        self.app.state['message'] = { **self.form }
         await self.run_action("app.push_screen('card_edit')")
-
-    @work(exclusive=True, thread=True)
-    def generate_card(self) -> str:
-        text = generate_content(self.form['recipient'], self.form['context'], self.form['language'])
-        text = compute_lines(text)
-        return text
 
 
 class CardForm(Screen):
-    BINDINGS = [("ctrl+z", "app.pop_screen()", "Back to menu")]
+    BINDINGS = [("escape", "app.pop_screen()", "Back to menu")]
 
     def compose(self) -> ComposeResult:
         yield Header()

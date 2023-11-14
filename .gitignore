@@ -1,7 +1,11 @@
 **/.env
+**/.tmp
 **/.envrc
 **/*.gcode
 **/*.svg
 **/.DS_Store
+**/__pycache__
 .vscode
 
+config.toml
+.state

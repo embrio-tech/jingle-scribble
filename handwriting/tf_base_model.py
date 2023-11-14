@@ -383,7 +383,7 @@ class TFBaseModel(object):
         if self.optimizer == 'adam':
             return tf.train.AdamOptimizer(learning_rate, beta1=beta1_decay)
         elif self.optimizer == 'gd':
-            return tf.train.GradientDescentOptimizer(learning_rate)
+            return tf.train.GradientDescapeentOptimizer(learning_rate)
         elif self.optimizer == 'rms':
             return tf.train.RMSPropOptimizer(learning_rate, decay=beta1_decay, momentum=0.9)
         else:

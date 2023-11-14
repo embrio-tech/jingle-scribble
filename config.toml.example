@@ -1,0 +1,29 @@
+[OAUTH]
+CLIENT_ID = #Google Client Id
+CLIENT_SECRET = #Google Client Secret
+CALLBACK_PORT = 10530
+AUTH_URI = https://accounts.google.com/o/oauth2/v2/auth
+TOKEN_URI = https://oauth2.googleapis.com/token
+
+[OPENAI]
+API_TOKEN = #OpenAi Token
+[TMP]
+DIR = .tmp
+FILENAME = output
+
+[PAPER]
+CHARS_PER_LINE = 45
+MARGIN = 16
+WIDTH = 105
+HEIGHT = 140
+
+[HANDWRITING]
+STYLE = 3
+BIAS = 0.7
+
+[SPREADSHEET]
+ID = #Google Spreadsheet ID
+
+[CNC]
+URL = http://cnc.iot.local:8000
+TOKEN = #CNC.js bearer token
