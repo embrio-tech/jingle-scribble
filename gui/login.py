@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from textual import work
+from textual.worker import WorkerFailed
 from textual.screen import Screen
 from textual.app import ComposeResult
 from textual.containers import Container
@@ -29,11 +30,14 @@ class Body(Container):
         if (event.button.name == 'google_login'):
             has_credentials = 'credentials' in self.app.state
             if not has_credentials:
-              auth_worker = self.authenticate()
-              authenticated = await auth_worker.wait()
-              if (authenticated): await self.run_action("app.pop_screen")
+              try:
+                auth_worker = self.authenticate()
+                authenticated = await auth_worker.wait()
+                if (authenticated): await self.run_action("app.pop_screen")
+              except WorkerFailed as err:
+                self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
             
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     def authenticate(self):
         code_verifier, code_challenge = pkce.generate_pkce_pair()
         redirect_uri = f'http://127.0.0.1:{PORT}'

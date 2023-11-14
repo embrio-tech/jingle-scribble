@@ -4,6 +4,7 @@ from textual.screen import Screen
 from textual.app import ComposeResult
 from textual.widgets import Header, Footer, DataTable
 from textual import work
+from textual.worker import WorkerFailed
 from googleapiclient.discovery import build
 
 GOOGLE_SPREADSHEET = config['SPREADSHEET']['ID']
@@ -16,25 +17,29 @@ class CardTable(Screen):
         if (not has_credentials):
             await self.run_action("app.push_screen('login')")
             return
-        request_worker = self.get_recipients()
-        print('fetching values')
-        values = await request_worker.wait()
-        table = self.query_one(DataTable)
-        table.clear(columns=True)
-        table.add_columns(*values[0])
-        table.add_rows(values[1:])
-        return
+        try:
+          request_worker = self.get_recipients()
+          values = await request_worker.wait()
+          table = self.query_one(DataTable)
+          table.clear(columns=True)
+          table.add_columns(*values[0])
+          table.add_rows(values[1:])
+        except WorkerFailed as err:
+          self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
     
     async def on_data_table_row_selected(self, event: DataTable.RowSelected):
-        request_worker = self.get_message(event.cursor_row)
-        row_id, first_name, last_name, context, language, style, text = await request_worker.wait()
-        message = { 'row_id': row_id, 'recipient': f'{first_name} {last_name}', 'context': context, 'language': language, 'style': style }
-        if text: message['text'] = text
-        self.app.state['message'] = message
-        await self.run_action("app.push_screen('card_edit')")
+        try:
+          request_worker = self.get_message(event.cursor_row)
+          row_id, first_name, last_name, context, language, style, text = await request_worker.wait()
+          message = { 'row_id': row_id, 'recipient': f'{first_name} {last_name}', 'context': context, 'language': language, 'style': style }
+          if text: message['text'] = text
+          self.app.state['message'] = message
+          await self.run_action("app.push_screen('card_edit')")
+        except WorkerFailed as err:
+          self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
         
 
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     def get_recipients(self) -> List:
         service = build("sheets", "v4", credentials=self.app.state['credentials'])
         sheet = service.spreadsheets()
@@ -42,7 +47,7 @@ class CardTable(Screen):
         values = result.get("values", [])
         return values
     
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     def get_message(self, line_nr: int) -> List:
         row_id = line_nr + 2
         service = build("sheets", "v4", credentials=self.app.state['credentials'])

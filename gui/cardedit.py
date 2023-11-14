@@ -29,13 +29,16 @@ class TextEditor(TextArea):
     
     async def action_generate_card(self):
         await self.run_action("app.push_screen('loader')")
-        text_worker = self.generate_card()
-        text = await text_worker.wait()
-        self.app.state['message'] = { **self.app.state['message'], 'text': text }
-        self.load_text(text)
+        try:
+          text_worker = self.generate_card()
+          text = await text_worker.wait()
+          self.app.state['message'] = { **self.app.state['message'], 'text': text }
+          self.load_text(text)
+        except WorkerFailed as err:
+            self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
         await self.run_action("app.pop_screen")
 
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     def generate_card(self) -> str:
         text = generate_content(
             self.app.state['message']['recipient'], 
@@ -79,11 +82,14 @@ class TextEditor(TextArea):
         self.app.state['message']['text'] = self.text
         row_id = message['row_id']
         await self.run_action("app.push_screen('loader')")
-        update_worker = self.save_message(row_id, self.text)
-        await update_worker.wait()
+        try:
+          update_worker = self.save_message(row_id, self.text)
+          await update_worker.wait()
+        except WorkerFailed as err:
+            self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
         await self.run_action("app.pop_screen")
     
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     def save_message(self, row_id: int, text: str) -> None:
         service = build("sheets", "v4", credentials=self.app.state['credentials'])
         sheet = service.spreadsheets()
@@ -109,14 +115,17 @@ class CardEdit(Screen):
 
     async def action_send_gcode(self):
         gcode = Path(TMP_DIR, f'{TMP_FILENAME}.gcode')
-        if gcode.exists(): 
-            gcode_worker = self.send_gcode(gcode.absolute())
-            await gcode_worker.wait()
-            self.app.notify('GCODE Sent!', timeout=10)
+        if gcode.exists():
+            try:
+              gcode_worker = self.send_gcode(gcode.absolute())
+              await gcode_worker.wait()
+              self.app.notify('GCODE Sent!', timeout=10)
+            except WorkerFailed as err:
+              self.app.notify(message=err.error.__str__(),severity='error',timeout=10)
         else: 
             self.app.notify('No GCODE, Please generate first!', timeout=10, severity='error')
 
-    @work(exclusive=True, thread=True)
+    @work(exclusive=True, thread=True, exit_on_error=False)
     async def send_gcode(self, path):
         with open(path, 'r') as f:
           gcode = f.read()
