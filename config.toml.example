@@ -7,19 +7,22 @@ TOKEN_URI = https://oauth2.googleapis.com/token
 
 [OPENAI]
 API_TOKEN = #OpenAi Token
+
 [TMP]
 DIR = .tmp
 FILENAME = output
 
 [PAPER]
-CHARS_PER_LINE = 45
+CHARS_PER_LINE = 50
 MARGIN = 16
 WIDTH = 105
 HEIGHT = 140
 
 [HANDWRITING]
-STYLE = 3
-BIAS = 0.7
+STYLE = 5
+BIAS = 0.6
+LINE_SPACING = 1
+PAR_SPACING = 0.5
 
 [SPREADSHEET]
 ID = #Google Spreadsheet ID

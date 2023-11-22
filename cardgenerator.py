@@ -9,7 +9,8 @@ from typing import List
 from handwriting.main import hand
 from xml.etree import ElementTree
 from svg_to_gcode.svg_parser import parse_root, Transformation
-from gcode import gcode_compiler
+from svg_to_gcode.compiler import Compiler
+from gcode import CustomInterface
 
 TMP_DIR = config['TMP']['DIR']
 TMP_FILENAME = config['TMP']['FILENAME']
@@ -21,8 +22,8 @@ openai.api_key = config['OPENAI']['API_TOKEN']
 
 def generate_content(recipient: str, context: str, language: str, style: str) -> str:
     prompt = f"""
-    Think like a business developer of a small swiss software development agency specialized in cloud-native web applications named embrio.
-    Write a max 400 characters Christmas card. Use a friendly, simple and positive writing style.
+    Think like the owner of a small swiss software development agency specialized in cloud-native web applications named embrio.
+    Write a short Christmas card. Use a friendly, simple and positive tone. Use the following cues:
 
     Recipient: {recipient}
 
@@ -30,18 +31,16 @@ def generate_content(recipient: str, context: str, language: str, style: str) ->
     {context}
 
     Content of the card:
-    - All the best ideas always start on paper.
-    - The Christmas present is a high quality Swiss pen.
-    - With it you can write up to eight km of ideas.
-    - Whenever these are fit to be turned into digital products remember about us!
+    - Despite digitalisation, all the best ideas start on paper.
+    - We gift you a high quality Swiss pen.
     - We are always happy to help.
 
     Language of the card: {language}
     Style of the card: {style}
 
     Add a P.S stating: 
-    - This card was generated bi AI and written by a robot. Ain't that crazy? 
-    - Visit xmas.embrio.tech to learn how we pulled this off.
+    - This handwritten card was entirely made by AI.
+    - Visit xmas.embrio.tech to learn how.
     
     Don't justify your answers. Don't include or invent information not mentioned in the CONTEXT or CONTENT INFORMATION."""
 
@@ -63,7 +62,6 @@ def draw_svg(lines: List[str]):
     styles = [HANDWRITING_STYLE for i in lines]  # 1
     stroke_colors = ['black' for i in lines]
     stroke_widths = [0.2 for i in lines]
-    line_spacings = [0.70 for i in lines]
 
     return hand.write(
         write_file=True,
@@ -71,8 +69,7 @@ def draw_svg(lines: List[str]):
         biases=biases,
         styles=styles,
         stroke_colors=stroke_colors,
-        stroke_widths=stroke_widths,
-        line_spacings=line_spacings
+        stroke_widths=stroke_widths
     )
 
 def compute_lines(text: str, chars: int = 70) -> str:
@@ -95,6 +92,7 @@ def compile_gcode(svg: str) -> str:
     transform = Transformation()
     transform.add_scale(1, -1)
     curves = parse_root(root, False, None, False, True, transform)
+    gcode_compiler = Compiler(CustomInterface, cutting_speed=2000,movement_speed=-1, pass_depth=0, custom_footer=["G0 Z0;", "G0 X0 Y0 Z0;"])
     gcode_compiler.append_curves(curves)
     gcode = gcode_compiler.compile()
     with open(Path(TMP_DIR, f'{TMP_FILENAME}.gcode'), 'w') as file:

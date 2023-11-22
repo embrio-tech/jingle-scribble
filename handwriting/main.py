@@ -15,6 +15,8 @@ TMP_FILENAME = config['TMP']['FILENAME']
 MARGIN = int(config['PAPER']['MARGIN'])
 PAPER_WIDTH = int(config['PAPER']['WIDTH'])
 PAPER_HEIGHT = int(config['PAPER']['HEIGHT'])
+LINE_SPACING = float(config['HANDWRITING']['LINE_SPACING'])
+PAR_SPACING = float(config['HANDWRITING']['PAR_SPACING'])
 
 
 class Hand(object):
@@ -46,7 +48,7 @@ class Hand(object):
         )
         self.nn.restore()
 
-    def write(self, write_file: bool, lines, biases=None, styles=None, stroke_colors=None, stroke_widths=None, line_spacings=None):
+    def write(self, write_file: bool, lines, biases=None, styles=None, stroke_colors=None, stroke_widths=None):
         valid_char_set = set(drawing.alphabet)
         for line_num, line in enumerate(lines):
             if len(line) > 75:
@@ -67,7 +69,7 @@ class Hand(object):
                     )
 
         strokes = self._sample(lines, biases=biases, styles=styles)
-        return self._draw(strokes, lines, write_file, stroke_colors=stroke_colors, stroke_widths=stroke_widths, line_spacings=line_spacings)
+        return self._draw(strokes, lines, write_file, stroke_colors=stroke_colors, stroke_widths=stroke_widths)
 
     def _sample(self, lines, biases=None, styles=None):
         num_samples = len(lines)
@@ -118,28 +120,33 @@ class Hand(object):
                    for sample in samples]
         return samples
 
-    def _draw(self, strokes, lines, write_file: bool, stroke_colors=None, stroke_widths=None, line_spacings=None):
+    def _draw(self, strokes, lines, write_file: bool, stroke_colors=None, stroke_widths=None):
         stroke_colors = stroke_colors or ['black']*len(lines)
         stroke_widths = stroke_widths or [2]*len(lines)
-        line_spacings = line_spacings or [1]*len(lines)
-
+        line_spacings = [ LINE_SPACING if line else PAR_SPACING for line in lines ]
+        
+        written_strokes = [None]*len(strokes)
+        line_heights = [None]*len(strokes)
         x_min, x_max = [0,0]
-        h_max = 0
         for i, offsets in enumerate(strokes):
-            # offsets[:, :2] *= scale_factor
+            #offsets[:, :2] *= scale_factor
             strokes[i] = drawing.offsets_to_coords(offsets)
             strokes[i] = drawing.denoise(strokes[i])
             strokes[i][:, :2] = drawing.align(strokes[i][:, :2])
             strokes[i][:, 1] *= -1
 
-            x_max = max(x_max, np.max(strokes[i][:,0]))
-            x_min = min(x_min, np.min(strokes[i][:,0]))
-            h_max = max(h_max, 8*strokes[i][:,1].std())
+            written_strokes[i] = strokes[i][strokes[i][:,2]==0,:3]
+            x_max = max(x_max, np.max(written_strokes[i][:,0]))
+            x_min = min(x_min, np.min(written_strokes[i][:,0]))
+            
+            y_min = min(x_min, np.min(written_strokes[i][:,1]))
+            y_max = min(x_min, np.max(written_strokes[i][:,1]))
+            line_heights[i] = y_max-y_min
             
         text_width = x_max - x_min
         scale_factor = (PAPER_WIDTH - MARGIN) / text_width
-        line_height = h_max * scale_factor
-        view_height = line_height * (len(strokes)) * np.mean(line_spacings)+ MARGIN
+        line_height = 6*np.std(line_heights)*scale_factor  #strokes[:][:,1].std() #h_max * scale_factor
+        view_height = line_height * sum(line_spacings) + MARGIN
 
         if view_height > PAPER_HEIGHT:
            raise ValueError('Message too long, overflowing paper length')

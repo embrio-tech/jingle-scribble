@@ -1,5 +1,5 @@
 import warnings
-from svg_to_gcode.compiler import Compiler, interfaces
+from svg_to_gcode.compiler import interfaces
 from svg_to_gcode.geometry import Vector
 
 
@@ -48,8 +48,3 @@ class CustomInterface(interfaces.Gcode):
             self.position = Vector(x, y)
 
         return command + ';'
-
-
-# Instantiate a compiler, specifying the custom interface and the speed at which the tool should move.
-gcode_compiler = Compiler(CustomInterface, cutting_speed=2000,
-                          movement_speed=-1, pass_depth=0, custom_footer=["G0 Z0;", "G0 X0 Y0 Z0;"])
