@@ -127,26 +127,33 @@ class Hand(object):
         
         written_strokes = [None]*len(strokes)
         line_heights = [None]*len(strokes)
+        line_widths = [None]*len(strokes)
+        indentations = [None]*len(strokes)
         x_min, x_max = [0,0]
         for i, offsets in enumerate(strokes):
-            #offsets[:, :2] *= scale_factor
             strokes[i] = drawing.offsets_to_coords(offsets)
             strokes[i] = drawing.denoise(strokes[i])
             strokes[i][:, :2] = drawing.align(strokes[i][:, :2])
             strokes[i][:, 1] *= -1
 
-            written_strokes[i] = strokes[i][strokes[i][:,2]==0,:3]
-            x_max = max(x_max, np.max(written_strokes[i][:,0]))
-            x_min = min(x_min, np.min(written_strokes[i][:,0]))
+            written_strokes[i] = strokes[i][strokes[i][:,2]==0,:2]
+
+            x_min = np.min(strokes[i][:,0])
+            x_max = np.max(strokes[i][:,0])
+            line_widths[i] = x_max - x_min
             
-            y_min = min(x_min, np.min(written_strokes[i][:,1]))
-            y_max = min(x_min, np.max(written_strokes[i][:,1]))
+            y_min = np.min(strokes[i][:,1])
+            y_max = np.max(strokes[i][:,1])
             line_heights[i] = y_max-y_min
-            
-        text_width = x_max - x_min
-        scale_factor = (PAPER_WIDTH - MARGIN) / text_width
-        line_height = 6*np.std(line_heights)*scale_factor  #strokes[:][:,1].std() #h_max * scale_factor
+
+            indentations[i] = x_min
+
+        
+        line_width = np.max(line_widths)
+        scale_factor = (PAPER_WIDTH - MARGIN) / line_width
+        line_height = np.mean(line_heights)*scale_factor  #strokes[:][:,1].std() #h_max * scale_factor
         view_height = line_height * sum(line_spacings) + MARGIN
+        indentation = np.mean(indentations)*scale_factor
 
         if view_height > PAPER_HEIGHT:
            raise ValueError('Message too long, overflowing paper length')
@@ -165,7 +172,7 @@ class Hand(object):
 
             line_strokes[:,:2] *= scale_factor
             line_strokes[:, :2] -= line_strokes[:, :2].min() + initial_coord
-            line_strokes[:, 0] += MARGIN / 2 - 2
+            line_strokes[:, 0] += MARGIN / 2 - indentation
             #line_strokes[:, 0] += (view_width - line_strokes[:, 0].max()) / 2
 
             prev_eos = 1.0

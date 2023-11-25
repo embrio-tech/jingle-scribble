@@ -1,6 +1,6 @@
 from handwriting.main import hand
 
-lines = ['The quick brown fox jumps over the lazy dog', 'and breaks a leg.', '', 'Oh, poor fox.']
+lines = ['The quick brown fox jumps over the lazy dog', 'and breaks a leg. Shit, what an injury.', '', 'Oh, poor fox.']
 biases = [0.6 for i in lines]
 styles = [5 for i in lines] #[i for i, j in enumerate(lines)]  # 1
 stroke_colors = ['black' for i in lines]
