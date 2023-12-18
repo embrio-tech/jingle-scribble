@@ -22,27 +22,24 @@ openai.api_key = config['OPENAI']['API_TOKEN']
 
 def generate_content(recipient: str, context: str, language: str, style: str) -> str:
     prompt = f"""
-    Think like the owner of a small swiss software development agency specialized in cloud-native web applications named embrio.
-    Write a short Christmas card. Use a friendly, simple and positive tone. Use the following cues:
+    Think like the owner of a small swiss software development agency specialized in cloud-native web applications named embrio, but avoid stating who you are.
+    Write a short personal Christmas card (max. 160 words). Use a simple and positive tone. Limit over-excitement and be rather humble and modest. Do not be salesy or sound cheesy. Use the following cues:
 
-    Recipient: {recipient}
+    Card Recipient: {recipient}
 
-    Context information about the recipient:
+    Personal context information about the recipient and our relationship:
     {context}
 
-    Content of the card:
+    Additional content of the card:
     - Despite digitalisation, all the best ideas start on paper.
     - We gift you a high quality Swiss pen.
-    - We are always happy to help.
+    - This handwritten card was entirely made by AI.
+    - Visit xmas.embrio.tech to learn how we did it.
 
     Language of the card: {language}
     Style of the card: {style}
-
-    Add a P.S stating: 
-    - This handwritten card was entirely made by AI.
-    - Visit xmas.embrio.tech to learn how.
     
-    Don't justify your answers. Don't include or invent information not mentioned in the CONTEXT or CONTENT INFORMATION."""
+    Don't justify your answers. Don't include or invent information not mentioned or specified in the CONTEXT or CONTENT INFORMATION. Avoid mentioning health matters."""
 
     prompt = textwrap.dedent(prompt)
     print(prompt)
